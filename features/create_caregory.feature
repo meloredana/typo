@@ -1,21 +1,24 @@
-Feature: Create Category
-  As an admin
-  In order add group articles by theme
-  I want to be able to add and edit categories
+Feature: Manage categories
+  As an admin user
+  in order to categorize blog articles
+  I want to be able to assign categories to articles
 
-  Background:
+  Background: The blog is set up
     Given the blog is set up
     And I am logged into the admin panel
 
-  Scenario: Successfully create a new category
-    Given I am on the new category page
-    When I fill in "category_name" with "Reviews"
-    And I press "Save"
-    Then I should see "Reviews"
+  Scenario: View the categories page
+    When I follow "Categories"
+    Then I should see "Title"
+    And I should see "Description"
+    And I should see "Permalink"
+    And I should see "Keywords"
 
-  Scenario: Successfully edit a category
-    Given I am on the new category page
-    When I follow "Edit"
-    And I fill in "category_description" with "Feedback"
+  Scenario: Create a new category
+    When I follow "Categories"
+    And I fill in "Name" with "Test"
+    And I fill in "Keywords" with "test"
+    And I fill in "Description" with "This is a test"
     And I press "Save"
-    Then I should see "Feedback"
+    Then I should see "Test"
+    And I should see "This is a test"

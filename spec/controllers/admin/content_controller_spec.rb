@@ -1,4 +1,4 @@
- require 'spec_helper'
+require 'spec_helper'
 
 describe Admin::ContentController do
   render_views
@@ -48,7 +48,7 @@ describe Admin::ContentController do
       response.should render_template('index')
       response.should be_success
     end
-    
+
     it 'should restrict to withdrawn articles' do
       article = Factory(:article, :state => 'withdrawn', :published_at => '2010-01-01')
       get :index, :search => {:state => 'withdrawn'}
@@ -56,7 +56,7 @@ describe Admin::ContentController do
       response.should render_template('index')
       response.should be_success
     end
-  
+
     it 'should restrict to withdrawn articles' do
       article = Factory(:article, :state => 'withdrawn', :published_at => '2010-01-01')
       get :index, :search => {:state => 'withdrawn'}
@@ -87,16 +87,16 @@ describe Admin::ContentController do
       it 'should save new article with draft status and no parent article' do
         Factory(:none)
         lambda do
-        lambda do
-          post :autosave, :article => {:allow_comments => '1',
-            :body_and_extended => 'my draft in autosave',
-            :keywords => 'mientag',
-            :permalink => 'big-post',
-            :title => 'big post',
-            :text_filter => 'none',
-            :published => '1',
-            :published_at => 'December 23, 2009 03:20 PM'}
-        end.should change(Article, :count)
+          lambda do
+            post :autosave, :article => {:allow_comments => '1',
+                                         :body_and_extended => 'my draft in autosave',
+                                         :keywords => 'mientag',
+                                         :permalink => 'big-post',
+                                         :title => 'big post',
+                                         :text_filter => 'none',
+                                         :published => '1',
+                                         :published_at => 'December 23, 2009 03:20 PM'}
+          end.should change(Article, :count)
         end.should change(Tag, :count)
         result = Article.last
         result.body.should == 'my draft in autosave'
@@ -112,8 +112,8 @@ describe Admin::ContentController do
         draft = Factory(:article, :published => false, :state => 'draft')
         lambda do
           post :autosave, :article => {
-            :id => draft.id,
-            :body_and_extended => 'new body' }
+              :id => draft.id,
+              :body_and_extended => 'new body' }
         end.should_not change(Article, :count)
         result = Article.find(draft.id)
         result.body.should == 'new body'
@@ -126,13 +126,13 @@ describe Admin::ContentController do
       before :each do
         @article = Factory(:article)
         @data = {:allow_comments => @article.allow_comments,
-          :body_and_extended => 'my draft in autosave',
-          :keywords => '',
-          :permalink => @article.permalink,
-          :title => @article.title,
-          :text_filter => @article.text_filter,
-          :published => '1',
-          :published_at => 'December 23, 2009 03:20 PM'}
+                 :body_and_extended => 'my draft in autosave',
+                 :keywords => '',
+                 :permalink => @article.permalink,
+                 :title => @article.title,
+                 :text_filter => @article.text_filter,
+                 :published => '1',
+                 :published_at => 'December 23, 2009 03:20 PM'}
       end
 
       it 'should create a draft article with proper attributes and existing article as a parent' do
@@ -232,7 +232,7 @@ describe Admin::ContentController do
 
     it 'should create article with no comments' do
       post(:new, 'article' => base_article({:allow_comments => '0'}),
-                 'categories' => [Factory(:category).id])
+           'categories' => [Factory(:category).id])
       assigns(:article).should_not be_allow_comments
       assigns(:article).should be_allow_pings
       assigns(:article).should be_published
@@ -395,7 +395,7 @@ describe Admin::ContentController do
         post(:new,
              :id => @orig.id,
              :article => {:title => @orig.title, :draft => 'draft',
-               :body => 'update' })
+                          :body => 'update' })
       end
 
       it "leaves the original published" do
@@ -427,8 +427,8 @@ describe Admin::ContentController do
       describe "saving new article as draft" do
         it "leaves the original draft in existence" do
           post(
-            :new,
-            'article' => base_article({:draft => 'save as draft'}))
+              :new,
+              'article' => base_article({:draft => 'save as draft'}))
           assigns(:article).id.should_not == @draft.id
           Article.find(@draft.id).should_not be_nil
         end
@@ -517,7 +517,7 @@ describe Admin::ContentController do
       it 'should allow updating body_and_extended' do
         article = @article
         post :edit, 'id' => article.id, 'article' => {
-          'body_and_extended' => 'foo<!--more-->bar<!--more-->baz'
+            'body_and_extended' => 'foo<!--more-->bar<!--more-->baz'
         }
         assert_response :redirect
         article.reload
@@ -671,4 +671,26 @@ describe Admin::ContentController do
 
     end
   end
+
+
+  describe 'merge action' do
+
+    before do
+      Factory(:blog)
+      #TODO delete this after remove fixture
+      Profile.delete_all
+      @user = Factory(:user)
+      # @user.editor = 'simple'
+      # @user.save
+      @article = Factory(:article)
+    end
+
+    it 'should not merge for non-admins' do
+      request.session = { :user => @user.id }
+      post :merge, :id => @article.id
+      response.should_not redirect_to(:action => 'index')
+    end
+
+  end
+
 end

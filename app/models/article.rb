@@ -104,10 +104,10 @@ class Article < Content
     end
 
     def search_with_pagination(search_hash, paginate_hash)
-      
+
       state = (search_hash[:state] and ["no_draft", "drafts", "published", "withdrawn", "pending"].include? search_hash[:state]) ? search_hash[:state] : 'no_draft'
-      
-      
+
+
       list_function  = ["Article.#{state}"] + function_search_no_draft(search_hash)
 
       if search_hash[:category] and search_hash[:category].to_i > 0
@@ -160,15 +160,15 @@ class Article < Content
 
   def param_array
     @param_array ||=
-      [published_at.year,
-                 sprintf('%.2d', published_at.month),
-                 sprintf('%.2d', published_at.day),
-                 permalink].tap \
+        [published_at.year,
+         sprintf('%.2d', published_at.month),
+         sprintf('%.2d', published_at.day),
+         permalink].tap \
       do |params|
-        this = self
-        k = class << params; self; end
-        k.send(:define_method, :to_s) { params[-1] }
-      end
+          this = self
+          k = class << params; self; end
+          k.send(:define_method, :to_s) { params[-1] }
+        end
   end
 
   def to_param
@@ -268,7 +268,7 @@ class Article < Content
   def self.count_by_date(year, month = nil, day = nil, limit = nil)
     if !year.blank?
       count(:conditions => { :published_at => time_delta(year, month, day),
-              :published => true })
+                             :published => true })
     else
       count(:conditions => { :published => true })
     end
@@ -333,11 +333,11 @@ class Article < Content
     Article.transaction do
       tags.clear
       tags <<
-      keywords.to_s.scan(/((['"]).*?\2|[\.\w]+)/).collect do |x|
-        x.first.tr("\"'", '')
-      end.uniq.map do |tagword|
-        Tag.get(tagword)
-      end
+          keywords.to_s.scan(/((['"]).*?\2|[\.\w]+)/).collect do |x|
+            x.first.tr("\"'", '')
+          end.uniq.map do |tagword|
+            Tag.get(tagword)
+          end
     end
   end
 
@@ -362,7 +362,7 @@ class Article < Content
   # check if time to comment is open or not
   def in_feedback_window?
     self.blog.sp_article_auto_close.zero? ||
-      self.published_at.to_i > self.blog.sp_article_auto_close.days.ago.to_i
+        self.published_at.to_i > self.blog.sp_article_auto_close.days.ago.to_i
   end
 
   def cast_to_boolean(value)
@@ -416,6 +416,37 @@ class Article < Content
     user.admin? || user_id == user.id
   end
 
+  def merge_with(other_article_id = nil)
+    return nil if other_article_id.nil? or other_article_id == self.id
+
+    other_article = Article.find(other_article_id)
+    merged_article = Article.new(:title => self.title,
+                                 :author => self.author,
+                                 :user_id => self.user_id,
+                                 :published => true,
+                                 :body => (self.body || '') + ' ' + (other_article.body || ''))
+    merged_article.save
+
+    self.comments.each do |comment|
+      comment.article_id = merged_article.id
+      comment.save
+    end
+
+    other_article.comments.each do |comment|
+      comment.article_id = merged_article.id
+      comment.save
+    end
+
+    other_article.published = false
+    other_article.save
+
+    self.published = false
+    self.save
+
+    return merged_article
+  end
+
+
   protected
 
   def set_published_at
@@ -433,10 +464,10 @@ class Article < Content
 
   def set_defaults
     if self.attributes.include?("permalink") and
-      (self.permalink.blank? or
-       self.permalink.to_s =~ /article-draft/ or
-       self.state == "draft"
-      )
+        (self.permalink.blank? or
+            self.permalink.to_s =~ /article-draft/ or
+            self.state == "draft"
+        )
       set_permalink
     end
     if blog && self.allow_comments.nil?
@@ -466,4 +497,5 @@ class Article < Content
     to = to - 1 # pull off 1 second so we don't overlap onto the next day
     return from..to
   end
+
 end
